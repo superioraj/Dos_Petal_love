@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PETAL.EXE v5.2 - 사랑한다 안한다</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Pen+Script&display=swap">
+<style>
+:root{
+  --bg:#000;--fg:#33ff66;--dim:#1a8f3a;--hi:#b8ffc8;--err:#ff6b6b;
+  --mono:Consolas,"D2Coding","Courier New",monospace;
+  --poem:"Gowun Batang","Nanum Myeongjo",Batang,"바탕",serif;
+  --pen:"Nanum Pen Script","Gowun Batang",Batang,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{background:var(--bg);color:var(--fg);font-family:var(--mono);min-height:100%}
+body{padding:10px;text-shadow:0 0 4px rgba(51,255,102,.5)}
+body::after{content:"";pointer-events:none;position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
+.wrap{max-width:560px;margin:0 auto;border:2px solid var(--fg)}
+.bar{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;padding:4px 8px;background:var(--fg);color:#000;text-shadow:none;font-weight:bold}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--dim)}
+.stats div{padding:6px;border-right:1px solid var(--dim);font-size:14px}
+.stats div:last-child{border-right:0}
+.stats span{display:block;color:var(--hi);font-size:18px}
+.tgt{display:flex;align-items:center;gap:12px;padding:5px 10px;border-bottom:1px solid var(--dim);min-height:38px}
+.tgt .k{font-family:var(--poem);font-size:13px;color:var(--dim)}
+.tgt b{font-family:var(--poem);font-size:21px;font-weight:700;letter-spacing:2px}
+.tgt.leaf{background:var(--fg);text-shadow:none}
+.tgt.leaf .k,.tgt.leaf b{color:#000}
+.timer{height:12px;border-bottom:1px solid var(--dim)}
+#tbar{height:100%;background:var(--fg);width:100%}
+.stage{padding:8px;display:flex;justify-content:center;cursor:pointer;touch-action:manipulation}
+.screen{position:relative;width:100%;max-width:420px}
+canvas{width:100%;aspect-ratio:3/4;display:block;border:1px solid var(--dim)}
+#msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.9);border:2px double var(--fg);padding:14px 18px;text-align:center;width:max-content;max-width:92%;font-family:var(--poem);font-size:16px;line-height:1.75;word-break:keep-all}
+#msg.hide{display:none}
+#msgText{white-space:pre-line}
+#msg.ok{color:var(--hi)}#msg.ng{color:var(--err)}
+#intro,#letter{position:absolute;inset:0;background:rgba(0,0,0,.92);border:2px double var(--fg);padding:14px 16px;overflow:auto;display:flex;flex-direction:column;gap:12px;cursor:default}
+#intro.hide,#letter.hide{display:none}
+.ttl{text-align:center;font-weight:bold;letter-spacing:3px}
+.ttl small{display:block;font-family:var(--poem);font-weight:400;letter-spacing:1px;font-size:15px;color:var(--hi);margin-top:2px}
+.poem{font-family:var(--poem);font-size:16px;line-height:1.85;color:var(--hi);white-space:pre-line;word-break:keep-all;min-height:8.5em}
+.poem .cur2{animation:b 1s steps(1) infinite}
+form{display:flex;flex-direction:column;gap:6px}
+label{font-family:var(--poem);font-size:15px}
+input{font-family:var(--pen);font-size:28px;background:#000;color:var(--hi);border:2px solid var(--fg);border-radius:0;padding:4px 10px;width:100%;caret-color:var(--fg);text-shadow:inherit}
+input:focus{outline:2px dashed var(--hi);outline-offset:2px}
+.err{color:var(--err);font-family:var(--poem);font-size:13px;min-height:1.3em}
+form button{padding:10px 6px;font-size:16px}
+.keys{font-size:12px;color:var(--dim);text-align:center}
+/* letter */
+#letter{gap:10px;padding:16px 18px}
+.to{font-family:var(--pen);font-weight:400;font-size:32px;color:var(--hi);outline:none}
+.to:focus-visible{outline:2px dashed var(--hi);outline-offset:2px}
+.lbody{font-family:var(--poem);font-size:15px;line-height:1.7;color:var(--hi);word-break:keep-all}
+.ln{display:block;margin-bottom:7px;animation:fi 1.1s ease both}
+.lend{font-family:var(--poem);font-size:15px;line-height:1.85;color:var(--fg);white-space:pre-line;word-break:keep-all;border-top:1px dashed var(--dim);padding-top:10px;animation:fi 1.4s ease both}
+.sign{font-family:var(--pen);font-size:23px;line-height:1.4;text-align:right;color:var(--hi);word-break:keep-all;animation:fi 1.4s ease both}
+.lsc{font-size:12px;color:var(--dim);text-align:center}
+.lbtn{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.lbtn button{font-family:var(--poem);font-size:15px;padding:10px 4px}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.ctrl{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;border-top:1px solid var(--dim)}
+button{font-family:var(--mono);background:#000;color:var(--fg);border:2px solid var(--fg);border-radius:0;padding:12px 4px;cursor:pointer;font-size:16px;text-shadow:inherit;touch-action:manipulation}
+button:hover,button:focus-visible{background:var(--fg);color:#000;text-shadow:none}
+button:focus-visible{outline:2px dashed var(--hi);outline-offset:2px}
+.kc{font-size:13px;opacity:.85}
+.pw{font-family:var(--poem);font-size:20px;font-weight:700;margin-left:6px}
+.foot{padding:4px 8px;border-top:1px solid var(--dim);font-size:12px;color:var(--dim);line-height:1.5}
+.cur{animation:b 1s steps(1) infinite}
+@keyframes b{50%{opacity:0}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:420px){.stats div{font-size:11px}.stats span{font-size:15px}.pw{font-size:17px}.poem{font-size:14px;line-height:1.75}.tgt b{font-size:18px}input{font-size:24px}.lbody,.lend{font-size:13.5px}.ln{margin-bottom:5px}.to{font-size:27px}.sign{font-size:20px}}
+@media (prefers-reduced-motion:reduce){.cur,.poem .cur2,.ln,.lend,.sign{animation:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="bar"><span>PETAL.EXE v5.2 P31</span><span id="design">DESIGN #---</span></div>
+  <div class="stats" aria-label="게임 상태">
+    <div>SCORE<span id="score">0</span></div>
+    <div>COMBO<span id="combo">0</span></div>
+    <div>LEVEL<span id="level">1</span></div>
+    <div>LIFE<span id="life">***</span></div>
+  </div>
+  <div class="tgt" id="tgt"><span class="k">이번에 셀 것</span><b id="tgtWord">—</b></div>
+  <div class="timer" aria-hidden="true"><div id="tbar"></div></div>
+  <div class="stage" id="stage">
+    <div class="screen">
+      <canvas id="cv" width="420" height="560" role="img" aria-label="측면에서 본 꽃 한 송이"></canvas>
+      <div id="msg" class="hide" role="status" aria-live="polite"><p id="msgText"></p></div>
+      <section id="intro" aria-labelledby="introTtl">
+        <h1 class="ttl" id="introTtl">PETAL.EXE<small>사랑한다, 안한다</small></h1>
+        <p class="sr" id="poemSr"></p>
+        <p class="poem" id="poem" aria-hidden="true"></p>
+        <form id="nameForm" novalidate>
+          <label for="nm">사랑하는 사람의 이름</label>
+          <input id="nm" name="nm" type="text" maxlength="24" autocomplete="off" spellcheck="false" aria-describedby="nmErr">
+          <p class="err" id="nmErr" role="alert"></p>
+          <button type="submit">[ENTER] 꽃을 꺾는다</button>
+        </form>
+        <p class="keys">[A][←] 사랑한다 &nbsp;[L][→] 안한다 &nbsp;[ESC] 멈춤</p>
+      </section>
+      <section id="letter" class="hide" aria-labelledby="letterTo">
+        <h2 class="to" id="letterTo" tabindex="-1"></h2>
+        <div class="lbody" id="letterBody"></div>
+        <p class="lend" id="letterEnd"></p>
+        <p class="sign" id="letterSign">— 당신을 생각하며<br>꽃잎을 바라본 사람이</p>
+        <p class="lsc" id="letterScore"></p>
+        <div class="lbtn">
+          <button type="button" id="bAgain">[ENTER] 다시 꺾기</button>
+          <button type="button" id="bName">[F2] 이름 바꾸기</button>
+        </div>
+      </section>
+    </div>
+  </div>
+  <span class="sr" id="sr" aria-live="assertive"></span>
+  <div class="ctrl">
+    <button type="button" id="bLove"><span class="kc">[ A ]</span><span class="pw">사랑한다</span></button>
+    <button type="button" id="bNot"><span class="kc">[ L ]</span><span class="pw">안한다</span></button>
+  </div>
+  <div class="foot">[ENTER] 시작/넘기기 &nbsp;[ESC] 멈춤 &nbsp;[F2] 처음으로<br>C:\GAMES\PETAL&gt; 홀수=사랑한다 / 짝수=안한다 &nbsp;HI:<span id="hi">0</span><span class="cur">_</span></div>
+</main>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d'),msg=$('msg'),msgText=$('msgText'),sr=$('sr');
+const introEl=$('intro'),poemEl=$('poem'),nm=$('nm'),nmErr=$('nmErr'),letterEl=$('letter');
+const W=420,H=560,GROUND=505;
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const finePointer=window.matchMedia('(pointer: fine)').matches;
+const DPR=Math.min(window.devicePixelRatio||1,2);
+cv.width=W*DPR;cv.height=H*DPR;
+const POEM='"Gowun Batang","Nanum Myeongjo",Batang,"바탕",serif';
+const PEN='"Nanum Pen Script","Gowun Batang",Batang,serif';
+const SLOW=0.5; /* pluck + fall speed : 50% */
+const TAU=Math.PI*2;
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const irnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const G=(l,a)=>'hsla(135,100%,'+clamp(l,0,92).toFixed(1)+'%,'+(a===undefined?1:clamp(a,0,1))+')';
+const GLOW='rgba(51,255,102,.55)';
+
+const POEM_TEXT='바람이 멈춘 오후,\n들꽃 한 송이를 꺾어 듭니다.\n첫 잎은 언제나 사랑한다로 시작합니다.\n한 잎은 사랑한다, 한 잎은 안한다.\n마음은 늘 마지막 한 장에 머뭅니다.\n그 사람의 이름을 조용히 적어 주세요.\n꽃잎이 대답할 시간은 아주 짧으니,\n눈으로 먼저 세어 보세요.';
+$('poemSr').textContent=POEM_TEXT;
+
+/* ---------- LETTER : 5 themes x (설렘 a / 그리움 b / 다짐 c) ---------- */
+const THEMES=[
+ {n:'일상',
+  a:['오늘 버스 정류장에서 당신 생각을 했습니다.','커피를 두 잔 시킬 뻔했습니다.','당신이 좋아하는 노래가 가게에서 흘러나왔습니다.','편의점에서 당신이 즐겨 먹던 과자를 집었습니다.','횡단보도 앞에서 당신과 닮은 뒷모습을 보았습니다.','엘리베이터 거울 앞에서 괜히 머리를 매만졌습니다.','점심 메뉴를 고르다 당신 입맛을 떠올렸습니다.','지하철 창에 비친 내 얼굴이 웃고 있었습니다.'],
+  b:['우산을 챙기다가 당신 것도 챙기고 싶어졌습니다.','휴대폰이 울릴 때마다 먼저 이름을 확인합니다.','당신이 웃던 자리를 지날 때면 걸음이 느려집니다.','같이 걷던 골목의 빵집이 오늘도 문을 열었습니다.','사진첩을 넘기다 당신이 찍힌 사진에서 멈췄습니다.','퇴근길 노을이 당신 목도리 색과 닮았습니다.','식은 커피를 마시며 당신 목소리를 떠올렸습니다.','메모장에 당신에게 하고 싶은 말이 늘어 갑니다.'],
+  c:['다음 주말에는 그 빵집에 함께 가고 싶습니다.','이번에는 내가 먼저 안부를 묻겠습니다.','당신이 좋아하는 노래를 외워 두겠습니다.','우산은 늘 하나 더 챙겨 다니겠습니다.','오늘 저녁, 짧은 문자 하나를 보내 보려 합니다.','당신이 바쁜 날에는 조용히 기다리겠습니다.']},
+ {n:'비와 계절',
+  a:['창문에 빗방울이 맺힌 아침이었습니다.','젖은 길 위에 꽃잎 하나가 붙어 있었습니다.','첫눈 소식에 가장 먼저 당신이 떠올랐습니다.','봄바람에 벚꽃잎이 어깨에 내려앉았습니다.','소나기가 그친 뒤 하늘이 유난히 맑았습니다.','은행잎이 노랗게 깔린 길을 천천히 걸었습니다.','처마 끝에서 떨어지는 빗소리를 오래 들었습니다.','아침 공기에서 계절이 바뀌는 냄새가 났습니다.'],
+  b:['당신도 이 비를 보고 있을지 궁금했습니다.','우산 하나로 둘이 걷던 날이 떠올랐습니다.','젖은 신발로 웃던 당신 얼굴이 생각났습니다.','눈 쌓인 벤치에 당신 이름을 써 보았습니다.','여름밤 매미 소리에 그해 여름이 돌아왔습니다.','낙엽 밟는 소리가 당신 발소리 같았습니다.','김 서린 창에 손가락으로 작은 꽃을 그렸습니다.','장마가 길어도 당신 생각은 마르지 않았습니다.'],
+  c:['다음 비 오는 날에는 우산을 하나만 들고 가겠습니다.','첫눈이 오면 가장 먼저 연락하겠습니다.','벚꽃이 피면 그 길을 함께 걷고 싶습니다.','계절이 바뀌어도 이 마음은 그대로 두겠습니다.','추운 날엔 따뜻한 차 한 잔을 건네고 싶습니다.','다음 계절에도 당신 곁에 서 있고 싶습니다.']},
+ {n:'첫 만남',
+  a:['처음 인사하던 날, 당신의 목소리가 작았습니다.','나는 그날 신발 끈이 풀린 줄도 몰랐습니다.','당신이 건넨 펜을 아직 돌려주지 못했습니다.','처음 마주친 눈을 내가 먼저 피했습니다.','당신 이름을 처음 불렀을 때 목이 말랐습니다.','같은 책을 들고 있던 우연이 반가웠습니다.','첫 대화는 날씨 이야기뿐이었습니다.','그날 당신이 입었던 옷 색깔까지 기억합니다.'],
+  b:['당신이 처음 웃던 순간을 자주 꺼내 봅니다.','처음 걷던 그 길을 혼자 다시 걸어 보았습니다.','그때 하지 못한 말이 아직 주머니에 있습니다.','처음 받은 문자를 지우지 못하고 있습니다.','그날 카페의 창가 자리는 오늘도 비어 있었습니다.','당신이 고른 음료를 나도 따라 시켜 봅니다.','처음 함께 본 영화의 마지막 장면이 떠오릅니다.','첫 만남의 어색함마저 이제는 그립습니다.'],
+  c:['그때 빌린 펜은 다음에 꼭 직접 돌려주겠습니다.','처음처럼 조심스럽게, 하지만 더 솔직하겠습니다.','그날 하지 못한 말을 이번에는 하겠습니다.','그 창가 자리에 다시 함께 앉고 싶습니다.','처음 만난 날을 달력에 표시해 두었습니다.','당신 앞에서 이번에는 눈을 피하지 않겠습니다.']},
+ {n:'밤',
+  a:['불을 끄고 누워도 잠이 오지 않았습니다.','창밖 가로등 아래로 고양이 한 마리가 지나갔습니다.','늦은 밤 라디오에서 당신이 좋아하는 노래가 나왔습니다.','별을 세다가 당신 이름에서 멈췄습니다.','베개를 뒤집어도 당신 얼굴이 떠올랐습니다.','밤하늘에 초승달이 웃는 입처럼 걸려 있었습니다.','새벽 편의점 불빛이 유난히 따뜻해 보였습니다.','시계 초침 소리가 오늘따라 크게 들렸습니다.'],
+  b:['당신이 보낸 짧은 답장을 몇 번이고 다시 읽었습니다.','메시지를 썼다 지우기를 여러 번 했습니다.','당신도 아직 깨어 있을지 궁금했습니다.','통화가 끝난 뒤에도 휴대폰을 한참 쥐고 있었습니다.','꿈에서라도 만나기를 바라며 눈을 감았습니다.','밤바람에 창문이 흔들릴 때 당신 목소리가 그리웠습니다.','같이 올려다본 별자리를 혼자 찾아보았습니다.','새벽 두 시, 당신에게 쓴 편지를 서랍에 넣었습니다.'],
+  c:['내일 할 말을 혼자 연습해 보았습니다.','"잘 지냈어요?" 그 말이 제일 어려웠습니다.','오늘은 꼭 먼저 연락하겠습니다.','서랍 속 편지를 이번에는 부치려 합니다.','당신의 밤이 편안하기를 먼저 빌겠습니다.','내일은 "잘 자요"라고 먼저 말하겠습니다.']},
+ {n:'들판과 꽃',
+  a:['들판 끝에서 바람이 먼저 인사를 건넸습니다.','풀숲에서 작은 데이지 한 송이를 찾았습니다.','꽃잎 위에 앉은 나비가 쉽게 날아가지 않았습니다.','손끝에 묻은 꽃가루가 노랗게 빛났습니다.','클로버 사이에서 네 잎을 찾으려 허리를 숙였습니다.','민들레 홀씨를 불며 당신 이름을 불렀습니다.','이슬 맺힌 풀잎에 운동화가 젖었습니다.','언덕 위 나무 그늘이 둘이 앉기 딱 좋았습니다.'],
+  b:['당신 머리에 꽂아 주고 싶은 꽃을 보았습니다.','꽃 이름을 물어볼 사람이 당신뿐이었습니다.','들꽃 향기를 맡으면 당신 웃음이 떠오릅니다.','함께 앉았던 언덕에 혼자 앉아 보았습니다.','꺾은 꽃을 책 사이에 끼워 말려 두었습니다.','바람에 눕는 풀처럼 마음이 한쪽으로 기울었습니다.','해 질 녘 들판이 당신 뺨처럼 붉었습니다.','꽃반지를 만들다 당신 손가락 크기가 궁금했습니다.'],
+  c:['다음에는 꽃 한 다발을 직접 건네겠습니다.','말린 꽃은 편지와 함께 보내겠습니다.','당신이 좋아하는 꽃 이름을 꼭 배워 두겠습니다.','꽃에게 묻지 않고, 이제 당신에게 묻겠습니다.','그 언덕에 함께 앉아 노을을 보고 싶습니다.','내년 봄에도 이 들판에 함께 오고 싶습니다.']}
+];
+const LEAF_LINES=['잎사귀 하나에도 당신 이름을 걸어 보았습니다.','잎사귀 뒷면의 잎맥이 당신 손금 같았습니다.','떨어진 잎사귀를 주워 책갈피로 삼았습니다.','잎사귀 사이로 내리는 햇살이 따뜻했습니다.','꽃잎이 아니어도, 잎사귀도 대답을 해 주었습니다.','초록 잎사귀를 보며 당신이 입던 옷을 떠올렸습니다.'];
+const WARM_LINES=['몇 번을 세어도 대답은 같았습니다.','오늘은 꽃잎이 내 편이 되어 주었습니다.','숨을 고를 틈도 없이 당신이 떠올랐습니다.','연달아 같은 대답이 나와 혼자 웃었습니다.','손끝이 떨리지 않을 만큼 마음이 단단해졌습니다.','이제는 세지 않아도 대답을 알 것 같습니다.'];
+const EMPTY_LINES=['오늘은 꽃잎을 하나도 제대로 세지 못했습니다.','손이 떨려서였다고 말하고 싶습니다.'];
+const LETTER_MAX=10;
+let pools=null;
+function newPools(){
+  const t=THEMES[irnd(0,THEMES.length-1)];
+  pools={a:t.a.slice(),b:t.b.slice(),c:t.c.slice(),leaf:LEAF_LINES.slice(),warm:WARM_LINES.slice()};
+}
+function pickFrom(arr){if(!arr||!arr.length)return null;return arr.splice(irnd(0,arr.length-1),1)[0];}
+function nextLine(){
+  if(!pools)newPools();
+  let s=null;
+  if(F&&F.target==='leaf'&&Math.random()<.7)s=pickFrom(pools.leaf);
+  if(!s&&combo>0&&combo%5===0)s=pickFrom(pools.warm);
+  if(!s){
+    const n=letterLines.length,k=n<3?'a':n<7?'b':'c';
+    s=pickFrom(pools[k])||pickFrom(pools.b)||pickFrom(pools.a)||pickFrom(pools.c);
+  }
+  return s;
+}
+function closing(w){
+  if(w>=.8)return '꽃잎마다 같은 대답이었습니다. 마음은 한여름입니다.';
+  if(w>=.6)return '바람이 자주 내 편에 섰습니다. 봄이 깊어 가는 중입니다.';
+  if(w>=.4)return '사랑한다와 안한다 사이, 마음은 아직 피는 중입니다.';
+  if(w>=.2)return '꽃은 수줍었습니다. 가을처럼 천천히 물들 마음입니다.';
+  return '오늘의 꽃은 말이 없었습니다. 겨울 꽃눈은 봄을 기다립니다.';
+}
+
+function loadFonts(sample){
+  try{
+    if(!document.fonts||!document.fonts.load)return;
+    document.fonts.load('22px "Nanum Pen Script"',sample).catch(()=>{});
+    document.fonts.load('20px "Gowun Batang"',sample).catch(()=>{});
+    document.fonts.load('bold 20px "Gowun Batang"',sample).catch(()=>{});
+  }catch(e){}
+}
+loadFonts('사랑한다안한다꽃잎사귀나의대답은침묵에게첫두세네다섯여섯일곱여덟아홉열스물무한번째마지막장「」당신을생각하며꽃잎을바라본사람이');
+
+/* ---------- KOREAN ORDINAL ---------- */
+function ordinal(n){
+  if(n===1)return '첫';
+  if(n===20)return '스무';
+  const T=['','열','스물','서른','마흔'][Math.floor(n/10)]||String(n);
+  const O=['','한','두','세','네','다섯','여섯','일곱','여덟','아홉'][n%10];
+  return T+O;
+}
+
+/* ---------- DESIGN TABLES : 8 x 8 x 3 x 4 = 768 ---------- */
+const SHAPES=[
+ {n:'DAISY', wr:.13,tEnd:.96,k:3,dv:.03,wf:t=>Math.sqrt(Math.min(1,t*4))*(1-.12*t)},
+ {n:'OVAL',  wr:.36,tEnd:1,  k:0,dv:0,  wf:t=>Math.sin(Math.PI*Math.pow(t,.8))},
+ {n:'POINT', wr:.26,tEnd:1,  k:0,dv:0,  wf:t=>Math.pow(Math.max(0,Math.sin(Math.PI*Math.pow(t,1.15))),.85)},
+ {n:'SPOON', wr:.28,tEnd:1,  k:0,dv:0,  wf:t=>(.22+.78*Math.min(1,t*1.3))*Math.sqrt(Math.max(0,1-Math.pow(t,8)))},
+ {n:'COSMOS',wr:.34,tEnd:.93,k:3,dv:.07,wf:t=>Math.min(1,.15+t*1.15)},
+ {n:'HEART', wr:.42,tEnd:.9, k:2,dv:.16,wf:t=>Math.sin(Math.PI/2*Math.min(1,t*1.5))},
+ {n:'FRINGE',wr:.34,tEnd:.88,k:7,dv:.09,wf:t=>Math.min(1,.2+t)},
+ {n:'LANCE', wr:.09,tEnd:1,  k:0,dv:0,  wf:t=>Math.pow(Math.max(0,Math.sin(Math.PI*Math.pow(t,.9))),.6)}
+];
+const TONES=[
+ {n:'PHOSPHOR',l:58,mode:0},{n:'PALE',l:74,mode:0},{n:'DIM',l:36,mode:0},{n:'HATCH',l:52,mode:1},
+ {n:'STIPPLE',l:54,mode:2},{n:'WIRE',l:62,mode:3},{n:'BAND',l:50,mode:4},{n:'ETCH',l:46,mode:5}
+];
+const DISCS=[
+ {n:'DOME',l:38,dome:.35,rr:.22,lift:.1,droop:0,dl:[22,58],stamen:false},
+ {n:'CONE',l:16,dome:.95,rr:.3,lift:-.1,droop:.55,dl:[8,40],stamen:false},
+ {n:'ANEMONE',l:7,dome:.25,rr:.16,lift:.3,droop:0,dl:[3,18],stamen:true}
+];
+const LEAFS=['LANCE','OVAL','SERRATE','LOBED'];
+const DESIGNS=8*8*3*4;
+
+/* ---------- STATE ---------- */
+let st='name',score=0,combo=0,level=1,life=3,correct=0,hi=0,roundNo=0;
+let lover='',warmth=.3,warmShow=.3,letterLines=[],lastDone=false,lastLove=false;
+let F=null,limit=5,remain=5,pick=null,queue=[],pluckT=0,pluckInt=.15,plucked=0,holdT=-1;
+let verdictDone=false,roundOk=false,roundPts=0,bigWord=null,nextTimer=0,typeTimer=0;
+let HX=210,HY=180,SC=null,time=0,lastT=performance.now();
+const sp={x:0,y:0,vx:0,vy:0};
+let sprites=[],pops=[],specks=[];
+try{hi=+localStorage.getItem('petal_hi')||0;}catch(e){hi=0;}
+$('hi').textContent=hi;
+
+/* ---------- NAME / KOREAN PARTICLE ---------- */
+function cleanName(v){
+  let s=String(v||'').replace(/[\u0000-\u001F\u007F-\u009F]/g,'').replace(/\s+/g,' ').trim();
+  return Array.from(s).slice(0,12).join('').trim();
+}
+function josa(name,withBatchim,without){
+  const c=name.charCodeAt(name.length-1);
+  if(c>=0xAC00&&c<=0xD7A3)return name+(((c-0xAC00)%28)?withBatchim:without);
+  return name+'('+withBatchim+')'+without;
+}
+
+/* ---------- FLOWER GENERATION ---------- */
+function newFlower(lv,last){
+  const id=irnd(0,DESIGNS-1);
+  const shape=id%8,tone=Math.floor(id/8)%8,disc=Math.floor(id/64)%3,leafType=Math.floor(id/192);
+  const sh=SHAPES[shape],dc=DISCS[disc],tn=TONES[tone];
+  const target=last?'petal':((roundNo>=3&&Math.random()<.3)?'leaf':'petal');
+  const minN=Math.min(12,5+Math.floor(lv/2)),maxN=Math.min(24,10+lv*2);
+  const n=last?1:(target==='petal'?irnd(minN,maxN):irnd(6,16));
+  const nl=last?irnd(2,4):(target==='leaf'?irnd(3,Math.min(11,5+lv)):irnd(2,6));
+  const L=shape===7?rnd(80,96):rnd(66,86);
+  const r0=Math.max(12,L*dc.rr);
+  const e=clamp(rnd(44,52)-(lv-1)*2.2,22,52)*Math.PI/180;
+  const roll=rnd(-1,1)*Math.min(.3,.08+lv*.02);
+  const f={id,shape,tone,disc,leafType,target,sh,dc,tn,
+    hx:rnd(195,225),hy:rnd(170,195),roll,e,ce:Math.cos(e),se:Math.sin(e),cr:Math.cos(roll),sr:Math.sin(roll),
+    r0,domeH:r0*dc.dome,petals:[],leaves:[],dots:[],stamens:[],grass:[],soil:[]};
+  const base=Math.random()*TAU,jit=Math.min(.5,(lv-1)*.05);
+  const spacing=TAU*(r0+L*.55)/n,overlap=.9+Math.min(.6,(lv-1)*.05),hwMax=L*sh.wr;
+  for(let i=0;i<n;i++){
+    const th=last?Math.PI/2+rnd(-.5,.5):base+(i+(Math.random()-.5)*jit)*TAU/n;
+    f.petals.push({th,L:L*rnd(.9,1.08),
+      hw:Math.min(hwMax*rnd(.9,1.1),spacing*overlap/2),lift:dc.lift+rnd(-.08,.08),
+      droop:dc.droop*rnd(.8,1.2),dl:rnd(-5,5),alive:true});
+  }
+  let side=Math.random()<.5?-1:1;
+  for(let i=0;i<nl;i++){
+    f.leaves.push({t:.1+(i+.5)/nl*.5+rnd(-.015,.015),side,ang:-Math.PI/2+side*rnd(.7,1.15),
+      L:rnd(44,70)*(1-.25*(i/nl)),wr:rnd(.2,.3)*(leafType===0?.8:1),bend:rnd(.15,.38),alive:true,stub:false,dl:rnd(-3,3)});
+    side=-side;
+  }
+  const N=disc===1?120:disc===2?50:90;
+  for(let i=0;i<N;i++)f.dots.push({r:r0*.93*Math.sqrt((i+.5)/N),a:i*2.39996,l:rnd(dc.dl[0],dc.dl[1]),s:rnd(.9,1.7)});
+  f.dots.sort((p,q)=>Math.sin(p.a)*p.r-Math.sin(q.a)*q.r);
+  for(let i=0;i<26;i++)f.stamens.push({a:i/26*TAU+rnd(-.1,.1),h:rnd(2,7),rr:rnd(1.1,1.35)});
+  f.stamens.sort((p,q)=>Math.sin(p.a)-Math.sin(q.a));
+  for(let i=0;i<46;i++)f.grass.push({x:rnd(0,W),y:GROUND+rnd(-2,8),h:rnd(7,20),lean:rnd(-7,7),l:rnd(12,28)});
+  for(let i=0;i<70;i++)f.soil.push({x:rnd(0,W),y:rnd(GROUND+4,H-2),l:rnd(6,16)});
+  f.s0=[f.hx+rnd(-30,30),GROUND+8];f.s1=[f.s0[0]+rnd(-35,35),GROUND-120];f.c2x=rnd(-25,25);
+  F=f;sp.x=sp.y=sp.vx=sp.vy=0;HX=f.hx;HY=f.hy;SC=stemCtrl();
+  $('design').textContent='DESIGN #'+String(id+1).padStart(3,'0')+'/'+DESIGNS;
+  cv.setAttribute('aria-label','측면에서 본 꽃 한 송이, 디자인 '+(id+1)+'번, '+sh.n+' '+tn.n+' '+dc.n+' '+LEAFS[leafType]);
+}
+
+/* ---------- PROJECTION ---------- */
+function P(X,Y,Z){const x=X,y=-Y*F.ce+Z*F.se;return[HX+x*F.cr-y*F.sr,HY+x*F.sr+y*F.cr];}
+function stemCtrl(){const top=P(0,-F.r0*.55,0);return[F.s0,F.s1,[top[0]-F.sr*95+F.c2x,top[1]+F.cr*95],top];}
+function bez(c,t){const u=1-t,a=u*u*u,b=3*u*u*t,d=3*u*t*t,e=t*t*t;return[a*c[0][0]+b*c[1][0]+d*c[2][0]+e*c[3][0],a*c[0][1]+b*c[1][1]+d*c[2][1]+e*c[3][1]];}
+
+/* ---------- PETAL ---------- */
+function petalGeom(p){
+  const sh=F.sh,m=F.tn.mode,c=Math.cos(p.th),s=Math.sin(p.th),cf=Math.cos(p.lift),sf=Math.sin(p.lift),by=F.domeH*.12;
+  const pt=(t,u)=>{const rr=F.r0*.92+p.L*t*cf;return P(c*rr-s*u,by+p.L*t*sf-p.droop*p.L*t*t*.6,s*rr+c*u);};
+  const S=16,te=sh.tEnd,left=[],right=[];
+  for(let i=0;i<=S;i++){const t=te*i/S,w=sh.wf(t)*p.hw;left.push(pt(t,w));right.push(pt(t,-w));}
+  const out=left.slice();
+  if(sh.k>0){const wt=sh.wf(te)*p.hw,k=sh.k;
+    for(let j=0;j<k;j++){out.push(pt(1,wt*(1-(2*j+1)/k)));if(j<k-1)out.push(pt(1-sh.dv,wt*(1-2*(j+1)/k)));}}
+  for(let i=S;i>=0;i--)out.push(right[i]);
+  const vf=m===1?[-.8,-.6,-.4,-.2,0,.2,.4,.6,.8]:m===5?[-.6,-.4,-.2,0,.2,.4,.6]:[-.45,0,.45];
+  const veins=vf.map(v=>{const a=[];for(let i=1;i<=9;i++){const t=te*.9*i/9;a.push(pt(t,v*sh.wf(t)*p.hw*(1-t*.25)));}return a;});
+  const grid=[];
+  if(m===2)for(let i=1;i<=9;i++)for(let j=-3;j<=3;j++){const t=te*(i+.45*((j+3)%2))/10.5;grid.push(pt(t,j/3.6*sh.wf(t)*p.hw));}
+  const rm=F.r0*.92+p.L*.5*cf,Ym=by+p.L*.5*sf-p.droop*p.L*.15;
+  return{out,veins,grid,base:pt(0,0),tip:pt(te,0),depth:s*rm*F.ce+Ym*F.se};
+}
+function petalLight(p,depth){
+  const ef=p.lift-p.droop*.6,ct=Math.cos(p.th),stt=Math.sin(p.th);
+  let N=[-Math.sin(ef)*ct,Math.cos(ef),-Math.sin(ef)*stt],under=false;
+  if(N[1]*F.se+N[2]*F.ce<0){N=[-N[0],-N[1],-N[2]];under=true;}
+  const dif=Math.max(0,N[0]*-.45+N[1]*.78+N[2]*.43);
+  return clamp(F.tn.l*(.74+.32*dif)+p.dl-(depth<0?6:0)-(under?9:0),10,86);
+}
+function drawPetal(g,geo,l){
+  const m=F.tn.mode;
+  const path=()=>{g.beginPath();geo.out.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();};
+  path();
+  const gr=g.createLinearGradient(geo.base[0],geo.base[1],geo.tip[0],geo.tip[1]);
+  if(m===4){gr.addColorStop(0,G(l-30));gr.addColorStop(.42,G(l-22));gr.addColorStop(.52,G(l+4));gr.addColorStop(1,G(l+10));}
+  else if(m===3){gr.addColorStop(0,G(3));gr.addColorStop(1,G(l*.16));}
+  else if(m===1||m===2){gr.addColorStop(0,G(l-40));gr.addColorStop(1,G(l-22));}
+  else{gr.addColorStop(0,G(l-26));gr.addColorStop(.4,G(l));gr.addColorStop(1,G(l+6));}
+  g.fillStyle=gr;g.fill();
+  if(m===2){g.fillStyle=G(l+12);for(const q of geo.grid)g.fillRect(q[0]-.7,q[1]-.7,1.4,1.4);}
+  if(m===1){g.strokeStyle=G(l+4,.85);g.lineWidth=.7;}
+  else if(m===3){g.strokeStyle=G(l-6,.75);g.lineWidth=.6;}
+  else if(m===5){g.strokeStyle=G(l-28,.8);g.lineWidth=.5;}
+  else{g.strokeStyle=G(l-22,.5);g.lineWidth=.6;}
+  for(const v of geo.veins){g.beginPath();g.moveTo(geo.base[0],geo.base[1]);for(const q of v)g.lineTo(q[0],q[1]);g.stroke();}
+  path();g.save();g.shadowColor=GLOW;g.shadowBlur=m===3?4:2;
+  g.lineWidth=m===3?1.3:.8;g.strokeStyle=G(Math.min(90,l+16),m===3?1:.8);g.stroke();g.restore();
+}
+
+/* ---------- LEAF ---------- */
+function leafW(type,t){
+  let w;
+  if(type===0)w=Math.pow(Math.max(0,Math.sin(Math.PI*t)),.85)*(1-.25*t);
+  else if(type===1)w=Math.sin(Math.PI*Math.pow(t,.7));
+  else if(type===2){w=Math.pow(Math.max(0,Math.sin(Math.PI*t)),.85)*(1-.2*t);w*=1+.14*((t*13)%1)-.07;}
+  else w=Math.sin(Math.PI*Math.pow(t,.75))*(.68+.32*Math.abs(Math.sin(Math.PI*3*t)));
+  return Math.max(0,w)*Math.min(1,t*7);
+}
+function leafGeom(lf){
+  const a=bez(SC,lf.t),d=[Math.cos(lf.ang),Math.sin(lf.ang)],n=[-d[1],d[0]],L=lf.L,hw=L*lf.wr;
+  const c=t=>[a[0]+d[0]*L*t,a[1]+d[1]*L*t+lf.bend*L*t*t];
+  const A=[],B=[],mid=[],veins=[];
+  for(let i=0;i<=22;i++){const t=i/22,p=c(t),w=leafW(F.leafType,t)*hw;
+    A.push([p[0]+n[0]*w,p[1]+n[1]*w]);B.push([p[0]-n[0]*w,p[1]-n[1]*w]);mid.push(p);}
+  for(let k=1;k<=8;k++){const t=k/9.5,p=c(t),t2=Math.min(.98,t+.13),q=c(t2),w=leafW(F.leafType,t2)*hw*.86;
+    veins.push([p,[q[0]+n[0]*w,q[1]+n[1]*w]],[p,[q[0]-n[0]*w,q[1]-n[1]*w]]);}
+  return{A,B,mid,veins,base:a,tip:c(1),dir:d,aUp:n[1]<0};
+}
+function halfPath(g,mid,edge){
+  g.beginPath();g.moveTo(mid[0][0],mid[0][1]);for(const q of edge)g.lineTo(q[0],q[1]);
+  for(let i=mid.length-1;i>=0;i--)g.lineTo(mid[i][0],mid[i][1]);g.closePath();
+}
+function drawLeaf(g,geo,dl){
+  const k=dl||0,light=[G(20+k),G(38+k)],dark=[G(9+k),G(22+k)];
+  const ca=geo.aUp?light:dark,cb=geo.aUp?dark:light;
+  [[geo.A,ca],[geo.B,cb]].forEach(([edge,cs])=>{
+    halfPath(g,geo.mid,edge);const gr=g.createLinearGradient(geo.base[0],geo.base[1],geo.tip[0],geo.tip[1]);
+    gr.addColorStop(0,cs[0]);gr.addColorStop(1,cs[1]);g.fillStyle=gr;g.fill();});
+  g.strokeStyle=G(44,.45);g.lineWidth=.6;
+  for(const v of geo.veins){g.beginPath();g.moveTo(v[0][0],v[0][1]);g.lineTo(v[1][0],v[1][1]);g.stroke();}
+  g.beginPath();geo.mid.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));
+  g.strokeStyle=G(58,.85);g.lineWidth=1.2;g.stroke();
+  g.beginPath();geo.A.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));
+  for(let i=geo.B.length-1;i>=0;i--)g.lineTo(geo.B[i][0],geo.B[i][1]);g.closePath();
+  g.save();g.shadowColor=GLOW;g.shadowBlur=2;g.strokeStyle=G(50,.75);g.lineWidth=.8;g.stroke();g.restore();
+}
+function drawStub(lf){
+  const a=bez(SC,lf.t),d=[Math.cos(lf.ang),Math.sin(lf.ang)],e=[a[0]+d[0]*6,a[1]+d[1]*6+1];
+  ctx.lineCap='round';ctx.strokeStyle=G(26);ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(e[0],e[1]);ctx.stroke();
+  ctx.fillStyle=G(62);ctx.beginPath();ctx.arc(e[0],e[1],1.3,0,TAU);ctx.fill();
+}
+
+/* ---------- SCENE PARTS ---------- */
+function stemPath(dx){const c=SC;ctx.beginPath();ctx.moveTo(c[0][0]+dx,c[0][1]);ctx.bezierCurveTo(c[1][0]+dx,c[1][1],c[2][0]+dx,c[2][1],c[3][0]+dx,c[3][1]);}
+function drawStem(){
+  ctx.lineCap='round';
+  stemPath(0);ctx.strokeStyle=G(8);ctx.lineWidth=6.5;ctx.stroke();
+  stemPath(0);ctx.strokeStyle=G(22);ctx.lineWidth=3.8;ctx.stroke();
+  stemPath(-1.2);ctx.strokeStyle=G(52,.6);ctx.lineWidth=1;ctx.stroke();
+  ctx.strokeStyle=G(34,.7);ctx.lineWidth=.7;
+  for(let i=1;i<22;i++){const t=i/22,p=bez(SC,t),q=bez(SC,Math.min(1,t+.01)),dx=q[0]-p[0],dy=q[1]-p[1],dl=Math.hypot(dx,dy)||1,s=i%2?1:-1;
+    ctx.beginPath();ctx.moveTo(p[0]+s*-dy/dl*3,p[1]+s*dx/dl*3);ctx.lineTo(p[0]+s*-dy/dl*5.5+dx/dl*2,p[1]+s*dx/dl*5.5+dy/dl*2);ctx.stroke();}
+  for(const lf of F.leaves){const a=bez(SC,lf.t);ctx.fillStyle=G(30);ctx.beginPath();ctx.ellipse(a[0],a[1],3.6,2.4,0,0,TAU);ctx.fill();}
+}
+function drawCalyx(){
+  const r=F.r0,c=P(0,-r*.3,0);
+  ctx.fillStyle=G(14);ctx.beginPath();ctx.ellipse(c[0],c[1],r*.72,r*.72*F.se+r*.25,F.roll,0,TAU);ctx.fill();
+  for(const front of [false,true])for(let i=0;i<8;i++){
+    const a=i/8*TAU+.2;if((Math.sin(a)>0)!==front)continue;
+    const t=P(Math.cos(a)*r*.5,-r,Math.sin(a)*r*.5),l=P(Math.cos(a-.28)*r*.78,-r*.25,Math.sin(a-.28)*r*.78),q=P(Math.cos(a+.28)*r*.78,-r*.25,Math.sin(a+.28)*r*.78);
+    ctx.fillStyle=G(front?28:16);ctx.beginPath();ctx.moveTo(l[0],l[1]);
+    ctx.quadraticCurveTo((l[0]+t[0])/2,(l[1]+t[1])/2+1,t[0],t[1]);ctx.quadraticCurveTo((q[0]+t[0])/2,(q[1]+t[1])/2+1,q[0],q[1]);ctx.closePath();ctx.fill();
+    if(front){ctx.strokeStyle=G(46,.6);ctx.lineWidth=.6;ctx.stroke();}
+  }
+}
+function drawDisc(){
+  const dc=F.dc,r=F.r0,c=P(0,F.domeH*.5,0),ry=Math.max(1,r*F.se+F.domeH*F.ce*.5);
+  const g=ctx.createRadialGradient(c[0]-r*.3,c[1]-ry*.45,1,c[0],c[1],Math.max(r,ry)*1.15);
+  g.addColorStop(0,G(dc.l+16));g.addColorStop(.65,G(dc.l));g.addColorStop(1,G(Math.max(2,dc.l-12)));
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(c[0],c[1],r,ry,F.roll,0,TAU);ctx.fill();
+  for(const d of F.dots){const k=d.r/r,q=P(d.r*Math.cos(d.a),F.domeH*(1-k*k),d.r*Math.sin(d.a));
+    ctx.fillStyle=G(d.l);ctx.beginPath();ctx.arc(q[0],q[1],d.s,0,TAU);ctx.fill();}
+  if(dc.stamen)for(const s of F.stamens){
+    const a=P(Math.cos(s.a)*r*.5,F.domeH*.8,Math.sin(s.a)*r*.5),b=P(Math.cos(s.a)*r*s.rr,F.domeH+s.h,Math.sin(s.a)*r*s.rr);
+    ctx.strokeStyle=G(14);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+    ctx.fillStyle=G(72);ctx.beginPath();ctx.arc(b[0],b[1],1.6,0,TAU);ctx.fill();}
+  ctx.save();ctx.shadowColor=GLOW;ctx.shadowBlur=2;ctx.strokeStyle=G(dc.l+24,.5);ctx.lineWidth=.7;
+  ctx.beginPath();ctx.ellipse(c[0],c[1],r,ry,F.roll,0,TAU);ctx.stroke();ctx.restore();
+}
+function drawGround(){
+  const g=ctx.createLinearGradient(0,GROUND,0,H);g.addColorStop(0,G(9));g.addColorStop(1,G(2));
+  ctx.fillStyle=g;ctx.fillRect(0,GROUND,W,H-GROUND);
+  for(const s of F.soil){ctx.fillStyle=G(s.l);ctx.fillRect(s.x,s.y,1.5,1.5);}
+  ctx.strokeStyle=G(30,.6);ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,GROUND+.5);ctx.lineTo(W,GROUND+.5);ctx.stroke();
+  ctx.lineWidth=1.2;ctx.lineCap='round';
+  for(const b of F.grass){ctx.strokeStyle=G(b.l);ctx.beginPath();ctx.moveTo(b.x,b.y);
+    ctx.quadraticCurveTo(b.x+b.lean*.3,b.y-b.h*.6,b.x+b.lean,b.y-b.h);ctx.stroke();}
+}
+
+/* ---------- FALLING SPRITES / PARTICLES ---------- */
+function capture(pts,fn){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const q of pts){if(q[0]<x0)x0=q[0];if(q[1]<y0)y0=q[1];if(q[0]>x1)x1=q[0];if(q[1]>y1)y1=q[1];}
+  x0-=5;y0-=5;x1+=5;y1+=5;const w=Math.max(2,x1-x0),h=Math.max(2,y1-y0);
+  const c=document.createElement('canvas');c.width=Math.ceil(w*DPR);c.height=Math.ceil(h*DPR);
+  const g=c.getContext('2d');g.setTransform(DPR,0,0,DPR,-x0*DPR,-y0*DPR);fn(g);
+  return{img:c,w,h,x:x0+w/2,y:y0+h/2};
+}
+function addSprite(cap,vx,vy,leaf){
+  sprites.push({img:cap.img,w:cap.w,h:cap.h,x:cap.x,y:cap.y,vx,vy,rot:0,vr:rnd(-2.5,2.5)*(leaf?.45:1),flip:0,
+    vf:rnd(2,5)*(Math.random()<.5?-1:1)*(leaf?.55:1),ph:rnd(0,TAU),age:0,gt:0,leaf,landed:false,rest:GROUND+rnd(2,40),sy:1});
+  if(sprites.length>220)sprites.splice(0,sprites.length-220);
+}
+function updSprites(dt){
+  const ds=dt*SLOW;
+  for(const s of sprites){
+    if(s.landed){s.gt+=dt;continue;}
+    s.age+=ds;
+    s.vy+=430*ds;s.vy-=s.vy*(s.leaf?1.1:2.6)*ds;s.vx-=s.vx*1.5*ds;
+    const sway=reduce?0:Math.sin(s.ph+s.age*(s.leaf?2.4:4.2))*(s.leaf?22:38);
+    s.x+=(s.vx+sway)*ds;s.y+=s.vy*ds;s.rot+=s.vr*ds;s.flip+=s.vf*ds;
+    if(s.y>=s.rest){s.y=s.rest;s.landed=true;s.gt=0;s.sy=(Math.cos(s.flip)<0?-1:1)*rnd(.35,.6);}
+  }
+  sprites=sprites.filter(s=>!(s.landed&&s.gt>14));
+}
+function drawSprites(){
+  for(const s of sprites){
+    let sy=s.landed?s.sy:Math.cos(s.flip);if(Math.abs(sy)<.12)sy=sy<0?-.12:.12;
+    let a=1;if(s.landed&&s.gt>10)a=Math.max(0,1-(s.gt-10)/4);
+    ctx.save();ctx.globalAlpha=a*(sy<0?.7:1);ctx.translate(s.x,s.y);ctx.rotate(s.rot);ctx.scale(1,sy);
+    ctx.drawImage(s.img,-s.w/2,-s.h/2,s.w,s.h);ctx.restore();
+  }
+}
+function addSpecks(x,y,n,l){
+  for(let i=0;i<n;i++)specks.push({x,y,vx:rnd(-45,45),vy:rnd(-70,-5),age:0,life:rnd(.5,1.1),l});
+  if(specks.length>200)specks.splice(0,specks.length-200);
+}
+function updSpecks(dt){const ds=dt*SLOW;for(const s of specks){s.age+=ds;s.vy+=300*ds;s.x+=s.vx*ds;s.y+=s.vy*ds;}specks=specks.filter(s=>s.age<s.life);}
+function drawSpecks(){for(const s of specks){ctx.fillStyle=G(s.l,1-s.age/s.life);ctx.fillRect(s.x,s.y,1.6,1.6);}}
+function pop(t,x,y){pops.push({t,x:clamp(x,44,W-44),y,age:0});if(pops.length>30)pops.shift();}
+function updPops(dt){for(const p of pops){p.age+=dt;p.y-=24*dt;}pops=pops.filter(p=>p.age<1.4);}
+function drawPops(){
+  ctx.font='24px '+PEN;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=4;ctx.lineJoin='round';
+  for(const p of pops){ctx.globalAlpha=Math.max(0,1-p.age/1.4);ctx.strokeStyle='#000';ctx.strokeText(p.t,p.x,p.y);ctx.fillStyle='#b8ffc8';ctx.fillText(p.t,p.x,p.y);}
+  ctx.globalAlpha=1;
+}
+
+/* ---------- OVERLAY TEXT ---------- */
+function tag(t,x,y,size,inv,font){
+  ctx.font='bold '+size+'px '+font;ctx.textAlign='left';ctx.textBaseline='top';
+  const w=ctx.measureText(t).width;ctx.fillStyle=inv?'#33ff66':'rgba(0,0,0,.8)';ctx.fillRect(x-6,y-5,w+12,size+11);
+  ctx.strokeStyle='#33ff66';ctx.lineWidth=1;ctx.strokeRect(x-5.5,y-4.5,w+12,size+11);
+  ctx.fillStyle=inv?'#000':'#33ff66';ctx.fillText(t,x,y);
+}
+function softText(t,x,y,font,align,fill,outline,glow){
+  ctx.save();ctx.font=font;ctx.textAlign=align;ctx.textBaseline='middle';ctx.lineJoin='round';
+  ctx.lineWidth=outline;ctx.strokeStyle='rgba(0,0,0,.88)';ctx.strokeText(t,x,y);
+  ctx.shadowColor=GLOW;ctx.shadowBlur=glow;ctx.fillStyle=fill;ctx.fillText(t,x,y);ctx.restore();
+}
+function bigText(o){
+  softText(o.a,W/2,62,'20px '+POEM,'center',G(70),5,6);
+  softText(o.b,W/2,102,'46px '+PEN,'center','#b8ffc8',6,9);
+}
+function namePlate(){
+  if(!lover||st==='name')return;
+  const w=warmShow,size=Math.round(21+9*w);
+  ctx.save();ctx.font=size+'px '+PEN;ctx.textAlign='right';ctx.textBaseline='alphabetic';
+  ctx.shadowColor=GLOW;ctx.shadowBlur=1+16*w;
+  ctx.fillStyle=G(28+52*w,.22+.78*w);ctx.fillText(lover+'에게',W-14,H-14);ctx.restore();
+}
+
+/* ---------- RENDER ---------- */
+function render(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  const bg=ctx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#000');bg.addColorStop(1,G(3));
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  if(!F||st==='pause')return;
+  drawGround();SC=stemCtrl();
+  for(const lf of F.leaves){if(lf.alive)drawLeaf(ctx,leafGeom(lf),lf.dl);else if(lf.stub)drawStub(lf);}
+  drawStem();drawCalyx();
+  const gs=[];for(const p of F.petals)if(p.alive)gs.push([p,petalGeom(p)]);
+  gs.sort((a,b)=>a[1].depth-b[1].depth);
+  for(const [p,g] of gs)if(g.depth<0)drawPetal(ctx,g,petalLight(p,g.depth));
+  drawDisc();
+  for(const [p,g] of gs)if(g.depth>=0)drawPetal(ctx,g,petalLight(p,g.depth));
+  drawSprites();drawSpecks();drawPops();namePlate();
+  if(st==='play'){const leaf=F.target==='leaf';tag(leaf?'잎사귀':'꽃잎',14,14,22,leaf,POEM);}
+  if(st==='reveal'){
+    softText('나의 대답은 「'+(pick===null?'침묵':pick?'사랑한다':'안한다')+'」',14,22,'15px '+POEM,'left',G(58),4,3);
+    if(bigWord)bigText(bigWord);
+  }
+  if(st==='last'){
+    if(!lastDone){
+      softText('마지막 한 장',W/2,62,'24px '+POEM,'center',G(74),5,7);
+      softText('눌러서 직접 뜯어 주세요',W/2,98,'16px '+POEM,'center',G(58),4,3);
+    }else if(bigWord)bigText(bigWord);
+  }
+}
+
+/* ---------- UI ---------- */
+function show(t,cls){msg.className=cls||'';msgText.textContent=t;}
+function hud(){
+  $('score').textContent=score;$('combo').textContent=combo;$('level').textContent=level;
+  $('life').textContent=life>0?'*'.repeat(life):'-';
+  const tg=$('tgt'),tw=$('tgtWord');tg.classList.remove('leaf');
+  if(F&&(st==='play'||st==='reveal')){const leaf=F.target==='leaf';tw.textContent=leaf?'잎사귀':'꽃잎';tg.classList.toggle('leaf',leaf);}
+  else if(st==='last')tw.textContent='마지막 한 장';
+  else if(st==='letter')tw.textContent='편지';
+  else tw.textContent='—';
+}
+function typePoem(){
+  clearInterval(typeTimer);
+  const ch=Array.from(POEM_TEXT);
+  if(reduce){poemEl.textContent=POEM_TEXT;return;}
+  let i=0;poemEl.textContent='';
+  const cur=document.createElement('span');cur.className='cur2';cur.textContent='_';
+  const txt=document.createTextNode('');poemEl.appendChild(txt);poemEl.appendChild(cur);
+  typeTimer=setInterval(()=>{i++;txt.nodeValue=ch.slice(0,i).join('');if(i>=ch.length){clearInterval(typeTimer);}},30);
+}
+function finishPoem(){clearInterval(typeTimer);poemEl.textContent=POEM_TEXT;}
+function openName(){
+  st='name';show('','hide');letterEl.classList.add('hide');introEl.classList.remove('hide');
+  nm.value=lover;nmErr.textContent='';typePoem();hud();
+  if(finePointer){try{nm.focus({preventScroll:true});}catch(e){nm.focus();}}
+}
+function submitName(){
+  const v=cleanName(nm.value);
+  if(!v){nmErr.textContent='이름을 한 글자 이상 적어 주세요.';nm.focus();return;}
+  lover=v;nmErr.textContent='';finishPoem();introEl.classList.add('hide');nm.blur();
+  loadFonts(v+'에게');startGame();
+}
+
+/* ---------- GAME FLOW ---------- */
+function startGame(){
+  clearTimeout(nextTimer);letterEl.classList.add('hide');
+  score=0;combo=0;level=1;life=3;correct=0;roundNo=0;
+  warmth=.3;warmShow=.3;letterLines=[];lastDone=false;lastLove=false;newPools();
+  sprites=[];pops=[];specks=[];nextRound();
+}
+function nextRound(){
+  clearTimeout(nextTimer);roundNo++;newFlower(level,false);
+  limit=Math.max(2,5-(level-1)*.3)*(F.target==='leaf'?.85:1);remain=limit;
+  pick=null;queue=[];bigWord=null;verdictDone=false;holdT=-1;st='play';show('','hide');
+  sr.textContent='이번에 셀 것: '+(F.target==='leaf'?'잎사귀':'꽃잎');hud();
+}
+function answer(love){
+  if(st!=='play')return;
+  pick=love;const items=F.target==='petal'?F.petals:F.leaves,n=items.length,truth=n%2===1;
+  roundOk=love===truth;
+  roundPts=roundOk?Math.round((100+remain*60)*(1+Math.floor((combo+1)/5)*.5)):0;
+  const idx=items.map((_,i)=>i);
+  if(F.target==='petal'){const key=i=>{let d=(F.petals[i].th-Math.PI/2)%TAU;if(d<0)d+=TAU;return d;};idx.sort((a,b)=>key(a)-key(b));}
+  else idx.sort((a,b)=>F.leaves[b].t-F.leaves[a].t);
+  queue=idx;plucked=0;
+  pluckInt=(F.target==='leaf'?clamp(3/n,.18,.4):clamp(2.4/n,.09,.3))/SLOW;
+  pluckT=.3/SLOW;holdT=-1;verdictDone=false;bigWord=null;
+  st='reveal';show('','hide');hud();
+}
+function detach(i,word){
+  if(!SC)SC=stemCtrl();
+  if(F.target==='petal'){
+    const p=F.petals[i],geo=petalGeom(p),l=petalLight(p,geo.depth);
+    const cap=capture(geo.out,g=>drawPetal(g,geo,l));p.alive=false;
+    const dx=cap.x-HX,dy=cap.y-HY,dl=Math.hypot(dx,dy)||1;
+    addSprite(cap,dx/dl*rnd(40,90)+rnd(-15,15),-rnd(30,90),false);
+    addSpecks(geo.base[0],geo.base[1],reduce?2:6,74);
+    sp.vx+=dx/dl*45;sp.vy+=dy/dl*30;pop(word,cap.x,cap.y-12);
+  }else{
+    const lf=F.leaves[i],geo=leafGeom(lf);
+    const cap=capture(geo.A.concat(geo.B),g=>drawLeaf(g,geo,lf.dl));lf.alive=false;lf.stub=true;
+    addSprite(cap,lf.side*rnd(25,55),-rnd(10,40),true);
+    addSpecks(geo.base[0],geo.base[1],reduce?1:4,50);
+    sp.vx+=lf.side*9;sp.vy+=3;pop(word,cap.x,cap.y-14);
+  }
+}
+function pluckOne(i){
+  plucked++;const word=plucked%2===1?'사랑한다':'안한다';
+  const unit=F.target==='petal'?'꽃잎':'잎사귀';
+  bigWord={a:ordinal(plucked)+' 번째 '+unit,b:word};
+  detach(i,word);
+}
+function stepReveal(dt){
+  if(verdictDone)return;
+  if(queue.length){pluckT-=dt;while(pluckT<=0&&queue.length){pluckOne(queue.shift());pluckT+=pluckInt;}}
+  else{if(holdT<0)holdT=.8;holdT-=dt;if(holdT<=0)verdict();}
+}
+function verdict(){
+  verdictDone=true;
+  const n=(F.target==='petal'?F.petals:F.leaves).length,love=n%2===1,word=love?'사랑한다':'안한다',unit=F.target==='petal'?'꽃잎':'잎사귀';
+  const say=love?josa(lover,'이','가')+' 나를 사랑한다고 합니다':josa(lover,'은','는')+' 오늘은 아니라고 합니다';
+  const line=unit+' '+n+'장, 마지막 한 장은 「'+word+'」';
+  if(roundOk){
+    combo++;correct++;score+=roundPts;if(correct%5===0)level++;
+    warmth+=(1-warmth)*.14;
+    let note='편지가 조금 더 따뜻해졌습니다';
+    if(letterLines.length<LETTER_MAX){const s=nextLine();if(s){letterLines.push(s);note='편지에 한 줄을 적었습니다';}}
+    show('맞았습니다  +'+roundPts+'\n'+line+'\n'+say+'\n\n'+note,'ok');
+  }else{
+    combo=0;life--;warmth-=warmth*.18;
+    show((pick===null?'시간이 다 흘렀습니다':'빗나갔습니다')+'\n'+line+'\n'+say+'\n\n이름이 잠시 흐려졌습니다','ng');
+  }
+  sr.textContent=line;hud();nextTimer=setTimeout(advance,roundOk?1800:2100);
+}
+function advance(){
+  clearTimeout(nextTimer);
+  if(life>0){nextRound();return;}
+  st='over';
+  if(score>hi){hi=score;try{localStorage.setItem('petal_hi',String(hi));}catch(e){}$('hi').textContent=hi;}
+  hud();show('꽃이 모두 졌습니다\n들판에 마지막 한 송이가 남아 있습니다','ng');
+  nextTimer=setTimeout(enterLast,1900);
+}
+function enterLast(){
+  clearTimeout(nextTimer);st='last';lastDone=false;bigWord=null;
+  newFlower(1,true);remain=0;limit=1;show('','hide');
+  sr.textContent='마지막 한 장이 남았습니다. 눌러서 직접 뜯어 주세요.';hud();
+}
+function pluckLast(){
+  if(st!=='last'||lastDone)return;
+  lastDone=true;
+  lastLove=Math.random()<clamp(.3+.6*warmth,.3,.9);
+  const word=lastLove?'사랑한다':'안한다';
+  detach(0,word);bigWord={a:'마지막 꽃잎',b:word};
+  sr.textContent='마지막 꽃잎은 '+word;
+  nextTimer=setTimeout(showLetter,3800);
+}
+function showLetter(){
+  clearTimeout(nextTimer);st='letter';hud();
+  $('letterTo').textContent=lover+'에게';
+  const body=$('letterBody');body.textContent='';
+  const lines=letterLines.length?letterLines:EMPTY_LINES;
+  lines.forEach((t,i)=>{
+    const s=document.createElement('span');s.className='ln';s.textContent=t;
+    s.style.animationDelay=reduce?'0s':(i*.4)+'s';body.appendChild(s);
+  });
+  const d=reduce?'0s':(lines.length*.4+.3)+'s',d2=reduce?'0s':(lines.length*.4+1)+'s';
+  const end=$('letterEnd');
+  end.textContent=closing(warmth)+'\n'+(lastLove?'그리고 마지막 한 장은, 사랑한다.':'그리고 마지막 한 장은, 안한다.\n그래도 내일, 다시 꽃을 꺾겠습니다.');
+  end.style.animationDelay=d;$('letterSign').style.animationDelay=d2;
+  $('letterScore').textContent='SCORE '+score+'   HI '+hi;
+  letterEl.classList.remove('hide');letterEl.scrollTop=0;
+  sr.textContent=lover+'에게 보내는 편지가 도착했습니다.';
+  try{$('letterTo').focus({preventScroll:true});}catch(e){$('letterTo').focus();}
+}
+function skip(){
+  if(st!=='reveal')return;
+  if(!verdictDone){pluckInt=.03;if(pluckT>0)pluckT=0;if(holdT>.15)holdT=.15;}
+  else advance();
+}
+function pause(){
+  if(st==='play'){st='pause';show('잠시 멈춤\n꽃을 가려 두었습니다\n[ESC] 또는 화면 터치로 이어가기','');}
+  else if(st==='pause'){st='play';show('','hide');}
+}
+function reset(){
+  clearTimeout(nextTimer);score=0;combo=0;level=1;life=3;correct=0;roundNo=0;
+  warmth=.3;warmShow=.3;letterLines=[];lastDone=false;
+  sprites=[];pops=[];specks=[];bigWord=null;newFlower(1,false);remain=limit=5;openName();
+}
+function begin(){
+  if(st==='name')submitName();
+  else if(st==='letter')startGame();
+  else if(st==='last')pluckLast();
+  else if(st==='pause')pause();
+  else if(st==='reveal')skip();
+}
+
+/* ---------- MAIN LOOP ---------- */
+function updSpring(dt){
+  sp.vx+=(-110*sp.x-8*sp.vx)*dt;sp.vy+=(-110*sp.y-8*sp.vy)*dt;sp.x+=sp.vx*dt;sp.y+=sp.vy*dt;
+  if(F){HX=F.hx+sp.x+(reduce?0:Math.sin(time*.8)*1.5);HY=F.hy+sp.y;}
+}
+function frame(t){
+  let dt=Math.min(.05,Math.max(0,(t-lastT)/1000));lastT=t;if(st==='pause')dt=0;time+=dt;
+  if(st==='play'){remain-=dt;if(remain<=0){remain=0;answer(null);}}
+  if(st==='reveal')stepReveal(dt);
+  warmShow+=(warmth-warmShow)*Math.min(1,dt*2.2);
+  updSpring(dt);updSprites(dt);updSpecks(dt);updPops(dt);render();
+  $('tbar').style.width=Math.max(0,remain/limit*100)+'%';
+  requestAnimationFrame(frame);
+}
+
+/* ---------- INPUT ---------- */
+$('nameForm').addEventListener('submit',e=>{e.preventDefault();submitName();});
+poemEl.addEventListener('click',finishPoem);
+$('bAgain').addEventListener('click',e=>{e.stopPropagation();startGame();});
+$('bName').addEventListener('click',e=>{e.stopPropagation();reset();});
+$('bLove').addEventListener('click',()=>{st==='play'?answer(true):begin();});
+$('bNot').addEventListener('click',()=>{st==='play'?answer(false):begin();});
+$('stage').addEventListener('click',e=>{
+  if(st==='name'||st==='play'||st==='letter'||st==='over')return;
+  if(e.target.closest&&e.target.closest('button,input,form'))return;
+  begin();
+});
+document.addEventListener('keydown',e=>{
+  const k=e.key,c=e.code,tn=e.target&&e.target.tagName,onCtl=tn==='BUTTON'||tn==='INPUT';
+  if(st==='name')return;
+  if(k==='F2'){e.preventDefault();reset();return;}
+  if(k==='Escape'){if(st==='play'||st==='pause'){e.preventDefault();pause();}return;}
+  const isA=c==='KeyA'||k==='ArrowLeft'||k==='a'||k==='A'||k==='ㅁ';
+  const isL=c==='KeyL'||k==='ArrowRight'||k==='l'||k==='L'||k==='ㅣ';
+  const isGo=k==='Enter'||k===' ';
+  if(st==='play'){
+    if(isA){e.preventDefault();answer(true);}else if(isL){e.preventDefault();answer(false);}
+    return;
+  }
+  if(st==='last'){if(isA||isL||(isGo&&!onCtl)){e.preventDefault();pluckLast();}return;}
+  if(isGo&&!onCtl){e.preventDefault();begin();}
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&st==='play')pause();});
+
+newFlower(1,false);openName();requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
